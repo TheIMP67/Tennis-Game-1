@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en-gb">
+<head>
+    <meta charset="utf-8">
+    <title>Tennis Game</title>
+</head>
+<body style="background: #181818;">
+    <canvas id="canvas" width="800" height="600" style="display:block; margin:0 auto;">
+        Your browser does not support the canvas element.
+    </canvas>
+</body>
+    
+<script type="text/javascript">
+
+    var canvas = document.getElementById("canvas");
+    var ctx = canvas.getContext("2d");
+    
+    var ballX, ballY, ballIncX, ballIncY;
+    var batX, batY;
+    
+    var cpuX, cpuY;
+    
+    var playerScore = cpuScore = 0;
+    
+    var cursorX = cursorY = 0;
+    
+    const BALL_SIZE = 10;
+    const BAT_HEIGHT = 80;
+    const BAT_WIDTH = 10;
+    const PLAY_BORDER = 40;
+    const CPU_SPEED = 14;
+    const CPU_DIFF = BAT_HEIGHT * 0.6;
+    
+    batX = PLAY_BORDER;
+    cpuX = canvas.width - (PLAY_BORDER + BAT_WIDTH);
+
+    window.onload = function() {
+        
+        ballX = 395;
+        ballY = 295;
+        ballIncX = -3;
+        ballIncY = 2;
+        
+        cpuY = batY = canvas.height / 2;
+        
+        var FPS = 60;
+        
+        onmousemove = function(e) {
+            var rect = canvas.getBoundingClientRect();
+            var root = document.documentElement;
+            cursorX = e.clientX - rect.left - root.scrollLeft;
+            cursorY = e.clientY - rect.top - root.scrollTop;
+        }
+        
+        setInterval(function() {
+            update();
+            draw();
+        },1000/FPS);
+    
+    }
+    
+    function update() {
+        
+        moveBat();
+        moveCPU();
+        moveBall();
+        
+        function moveBall() {
+            
+            ballX += ballIncX;
+            ballY += ballIncY;
+            
+            if (ballY <= 0 || ballY >= canvas.height - BALL_SIZE) ballIncY = -ballIncY;
+            
+            if (ballX <= 0 || ballX >= canvas.width) 
+            {
+                resetBall();
+            } else if (ballX >= PLAY_BORDER && ballX <= canvas.width - PLAY_BORDER) {
+            
+                // Check for collision with player bat
+                if (ballX >= batX && ballX <= batX + BAT_WIDTH) {
+                    if (ballY >= batY && ballY <= (batY + BAT_HEIGHT)) ballIncX =- ballIncX;
+                    ballX += ballIncX;
+                };
+
+                // Check for collision with CPU bat
+                if (ballX >= cpuX && ballX <= cpuX + BALL_SIZE) {
+                    console.log('ball in same x pos as cpu');
+                    if (ballY >= cpuY && ballY <= (cpuY + BAT_HEIGHT)) ballIncX =- ballIncX;
+                    ballX += ballIncX;
+                };
+                
+            };
+            
+        }
+        
+        function moveBat() {
+            
+            batY = cursorY - BAT_HEIGHT / 2;
+            if(batY < 0) batY = 0;
+            if(batY > canvas.height - BAT_HEIGHT) batY = canvas.height - BAT_HEIGHT;
+            
+        }
+        
+        function moveCPU() {
+            
+            
+            if (cpuY + (BAT_HEIGHT / 2) < ballY - CPU_DIFF) {
+                cpuY += CPU_SPEED;
+            } else if (cpuY +(BAT_HEIGHT / 2) > ballY + CPU_DIFF) {
+                cpuY -= CPU_SPEED; 
+            }
+            
+            if(cpuY > canvas.height - BAT_HEIGHT) cpuY = canvas.height - BAT_HEIGHT;
+            
+        };
+        
+    };
+    
+    function draw() {
+        
+        clearScreen();
+        drawBall();
+        drawBat();
+        drawCPU();
+        drawScores();
+        
+        function drawBall() {
+            ctx.fillStyle = "red";
+            // ctx.fillRect(ballX, ballY, 10, 10);
+            ctx.beginPath();
+            drawCircle(ballX,ballY,5,'white');
+        }
+        
+        function drawBat() {
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(batX,batY,BAT_WIDTH,BAT_HEIGHT);
+        }
+        
+        function drawCPU() {
+            ctx.fillStyle = "#fff";
+            ctx.fillRect(cpuX,cpuY,BAT_WIDTH,BAT_HEIGHT);
+        }
+        
+        function drawScores() {
+            //
+            ctx.strokeStyle = "#aaa";
+            ctx.font = "48px Terminal";
+            ctx.strokeText(playerScore,canvas.width / 4,30);
+            ctx.strokeText(cpuScore,canvas.width - canvas.width / 4,30);
+        }
+        
+        function clearScreen() {
+            ctx.fillStyle = "#000";
+            ctx.fillRect(0,0,canvas.width, canvas.height);
+        }
+    }
+    
+    function resetBall() {
+        //ballY = canvas.width / 2;
+        if(ballX < canvas.width / 2) {
+            // CPU scored
+            cpuScore += 1;
+        } else {
+            playerScore += 1;
+        }
+        
+        ballX = canvas.width / 2;
+        ballIncX = -ballIncX;
+    }
+    
+    function drawCircle(xpos,ypos,radius,colour) {
+        ctx.fillStyle = colour;
+        ctx.beginPath();
+        ctx.arc(xpos+radius,ypos+radius,radius,0,2*Math.PI,true);
+        ctx.fill();
+    }
+
+</script>
+</html>
